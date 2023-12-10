@@ -115,17 +115,19 @@ public:
     // Função para imprimir a lista de adjacência do grafo
     void printGraph() {
         for (size_t i = 0; i < vertices.size(); ++i) {
-            std::cout << "Tecnologia: " << vertices[i].name << ", Grupo: " << vertices[i].group
-                      << ", Grau de Entrada: " << vertices[i].inDegree << ", Grau de Saída: "
-                      << vertices[i].outDegree << ", Grau: " << vertices[i].degree << "\n";
-
             for (const auto& edge : adjList[i]) {
-                std::cout << "-> " << edge.first << " (peso: " << edge.second << ")\n";
+                int idx = findVertex(edge.first);
+                if (idx != -1) {
+                    std::cout << edge.first << ", " << vertices[idx].group << ", "
+                            << vertices[idx].inDegree << ", " << vertices[idx].outDegree << ", "
+                            << vertices[idx].degree << ", "
+                            << vertices[i].name << ", " << edge.second << "\n";
+                }
             }
-
-            std::cout << std::endl;
         }
     }
+
+
 };
 
 
@@ -252,11 +254,11 @@ int main() {
         char TecDestino[100];
         scanf("%s", NomeArquivo);
         //scanf("%s", TecDestino);
-        scan_quote_string(TecDestino);
+        //scan_quote_string(TecDestino);
         LeRegistro(NomeArquivo, graph);
-        graph.findClickOriginators(TecDestino);
+        //graph.findClickOriginators(TecDestino);
 
-        //graph.printGraph();
+        graph.printGraph(); 
 
         return 0;
         
