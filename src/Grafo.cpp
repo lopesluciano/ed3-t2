@@ -67,20 +67,21 @@ public:
         if (idx_src != -1 && idx_dest != -1) {
             adjList[idx_src].push_back(std::make_pair(dest, weight));
 
-            // Ordenar a lista de adjacência após adicionar um novo elemento
-            adjList[idx_src].sort([](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {
-                return a.first < b.first;  // Ordenar com base no nome da tecnologia destino
-            });
-
             // Atualizar os graus
             vertices[idx_src].outDegree++;
             vertices[idx_dest].inDegree++;
             vertices[idx_src].degree++;
             vertices[idx_dest].degree++;
+
+            // Ordenar a lista de adjacência após adicionar um novo elemento
+            adjList[idx_src].sort([](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {
+                return a.first < b.first;  // Ordenar com base no nome da tecnologia destino
+            });
         } else {
             std::cout << "Tecnologia não encontrada!\n";
         }
     }
+
 
     // Função para listar as tecnologias de origem para uma tecnologia destino
     void findClickOriginators(const std::string& destTech) {
@@ -89,18 +90,28 @@ public:
         if (idx_dest != -1) {
             std::cout << destTech << ": ";
             bool found = false;
+            std::vector<std::string> originators; // Armazena as tecnologias de origem
 
+            // Coleta as tecnologias de origem para a tecnologia destino
             for (size_t i = 0; i < vertices.size(); ++i) {
                 for (const auto& edge : adjList[i]) {
                     if (edge.first == destTech) {
-                        if (found) {
-                            std::cout << ", ";
-                        }
-                        std::cout << vertices[i].name;
-                        found = true;
+                        originators.push_back(vertices[i].name);
                         break;
                     }
                 }
+            }
+
+            // Ordena as tecnologias de origem em ordem alfabética
+            std::sort(originators.begin(), originators.end());
+
+            // Imprime as tecnologias de origem ordenadas
+            for (size_t i = 0; i < originators.size(); ++i) {
+                if (i > 0) {
+                    std::cout << ", ";
+                }
+                std::cout << originators[i];
+                found = true;
             }
 
             if (!found) {
@@ -114,18 +125,30 @@ public:
 
     // Função para imprimir a lista de adjacência do grafo
     void printGraph() {
-        for (size_t i = 0; i < vertices.size(); ++i) {
-            for (const auto& edge : adjList[i]) {
-                int idx = findVertex(edge.first);
-                if (idx != -1) {
-                    std::cout << edge.first << ", " << vertices[idx].group << ", "
-                            << vertices[idx].inDegree << ", " << vertices[idx].outDegree << ", "
-                            << vertices[idx].degree << ", "
-                            << vertices[i].name << ", " << edge.second << "\n";
-                }
+        // Cria uma cópia dos vértices para não alterar a estrutura original
+        std::vector<Technology> sortedVertices = vertices;
+
+        // Ordena os vértices pelo nome da tecnologia
+        std::sort(sortedVertices.begin(), sortedVertices.end(),
+                [](const Technology& a, const Technology& b) {
+                    return a.name < b.name;
+                });
+
+        // Percorre os vértices ordenados
+        for (const auto& vertex : sortedVertices) {
+            // Encontra o índice do vértice na lista de adjacência
+            int idx = findVertex(vertex.name);
+
+            // Imprime as informações do vértice
+            for (const auto& edge : adjList[idx]) {
+                std::cout << vertex.name << " " << vertex.group << " "
+                        << vertex.inDegree << " " << vertex.outDegree << " "
+                        << vertex.degree << " "
+                        << edge.first << " " << edge.second << "\n";
             }
         }
     }
+
 
 
 };
@@ -204,6 +227,10 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
         addTechnology(Technology(d->tecnologiaDestino.nome, d->grupo));
         addTechnology(Technology(d->tecnologiaOrigem.nome, d->grupo));
 
+        if(d->tecnologiaDestino.nome == NULL || d->tecnologiaOrigem.nome == NULL){
+            continue;
+        }
+
         graph.addEdge(d->tecnologiaOrigem.nome, d->tecnologiaDestino.nome, d->peso);
 
 
@@ -212,7 +239,7 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
         free(d->tecnologiaOrigem.nome);
         indice++;
     }
-
+    
 
         //fecha os arquivos
         free(d);
@@ -226,6 +253,33 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
 int main() {
     Graph graph(0); // Inicialização do grafo com 0 vértices
 
+    int chave;
+    char NomeArquivo[100];
+    char TecDestino[100];
+
+    scanf("%d", &chave);
+    scanf("%s", NomeArquivo);
+    LeRegistro(NomeArquivo, graph);
+
+    switch (chave)
+    {
+    case 8:
+
+        graph.printGraph(); 
+
+        break;
+    
+    case 10:
+        int i;
+        int j = 0;
+        scanf("%d", &i);
+        while (j < i){
+            scan_quote_string(TecDestino);
+            graph.findClickOriginators(TecDestino);
+            j++;
+        }
+        break;  
+    }
     // Função para adicionar uma tecnologia somente se ela não existir
     auto addTechnology = [&](const Technology& tech) {
         int idx = graph.findVertex(tech.name);
@@ -250,15 +304,12 @@ int main() {
 		
 
         // Imprimindo a lista de adjacência do grafo
-        char NomeArquivo[100];
-        char TecDestino[100];
-        scanf("%s", NomeArquivo);
+
         //scanf("%s", TecDestino);
         //scan_quote_string(TecDestino);
-        LeRegistro(NomeArquivo, graph);
         //graph.findClickOriginators(TecDestino);
 
-        graph.printGraph(); 
+        
 
         return 0;
         
