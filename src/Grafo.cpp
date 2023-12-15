@@ -38,36 +38,42 @@ public:
     Graph(int vertices) : V(vertices), adjList(vertices), vertices() {}
 
     // Função para buscar um vértice dado o nome da tecnologia
-    int findVertex(const std::string& techName) {
+    int findVertex(const std::string& techName) {   
+        //Encontra o vertice com base no nome da tecnologia usando find_if da biblioteca STL do C++
         auto it = std::find_if(vertices.begin(), vertices.end(), [&](const Technology& t) {
             return t.name == techName;
         });
 
+        //Verifica se o vertice foi encontrado
         if (it != vertices.end()) {
+            // Retorna a distancia do inicio do vetor (vertices.begin) ate o iterador encontrado
             return std::distance(vertices.begin(), it);
         }
-
         return -1; // Retorna -1 se a tecnologia não for encontrada
     }
 
     // Função para adicionar uma tecnologia como vértice
     void addVertex(const Technology& tech) {
-        int idx = findVertex(tech.name);
+        // Verifica se o vertice nao existe
+        int idx = findVertex(tech.name); 
         if (idx == -1) {
+            // Caso exista, adiciona mais um vertice na lista de vertices
             vertices.push_back(tech);
+            // Adiciona uma lista de vazia correspondente a lista de adjacencias
             adjList.push_back(std::list<std::pair<std::string, int>>());
         }
     }
 
     // Função para adicionar uma aresta direcionada com um peso
     void addEdge(const std::string& src, const std::string& dest, int weight) {
-        int idx_src = findVertex(src);
-        int idx_dest = findVertex(dest);
+        int idx_src = findVertex(src); // Encontra o indice do vertice de Origem
+        int idx_dest = findVertex(dest); // Encontra o indice do vertice de Destino
 
+        // Verifica se os vertices de origem e destino existem no Grafo
         if (idx_src != -1 && idx_dest != -1) {
-            adjList[idx_src].push_back(std::make_pair(dest, weight));
+            adjList[idx_src].push_back(std::make_pair(dest, weight)); // Adiciona a aresta no na lista de adjacencias do vertice de origem
 
-            // Atualizar os graus
+            // Atualizar os graus dos vertices da aresta
             vertices[idx_src].outDegree++;
             vertices[idx_dest].inDegree++;
             vertices[idx_src].degree++;
@@ -78,6 +84,7 @@ public:
                 return a.first < b.first;  // Ordenar com base no nome da tecnologia destino
             });
         } else {
+            // Caso a tecnologia nao esteja no Grafo
             std::cout << "Tecnologia não encontrada!\n";
         }
     }
@@ -85,9 +92,10 @@ public:
 
     // Função para listar as tecnologias de origem para uma tecnologia destino
     void findClickOriginators(const std::string& destTech) {
-        int idx_dest = findVertex(destTech);
+        int idx_dest = findVertex(destTech); // Verifica a tecnologia destino
 
         if (idx_dest != -1) {
+            // Se a tecnologia destino foi encontrada, imprime tecnologia de destino
             std::cout << destTech << ": ";
             bool found = false;
             std::vector<std::string> originators; // Armazena as tecnologias de origem
@@ -96,7 +104,7 @@ public:
             for (size_t i = 0; i < vertices.size(); ++i) {
                 for (const auto& edge : adjList[i]) {
                     if (edge.first == destTech) {
-                        originators.push_back(vertices[i].name);
+                        originators.push_back(vertices[i].name); // Armazena a tecnologia de origem
                         break;
                     }
                 }
@@ -110,15 +118,15 @@ public:
                 if (i > 0) {
                     std::cout << ", ";
                 }
-                std::cout << originators[i];
+                std::cout << originators[i]; //Imprime o vetor de tecnologias de origem
                 found = true;
             }
 
             if (!found) {
-                std::cout << "Registro inexistente.";
+                std::cout << "Registro inexistente.";// Caso a tecnologia nao seja encontrada
             }
         } else {
-            std::cout << "Registro inexistente.";
+            std::cout << "Registro inexistente.";// Caso a tecnologia nao seja encontrada
         }
         std::cout << "\n\n";
     }
@@ -150,25 +158,24 @@ public:
     }
 
 
-
 };
 
+// Essa funcao cria um grafo e sua transposta a partir de um arquivo de entrada
+void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
 
-void LeRegistro(char *nomeArquivo, Graph &graph){
-
-    //Abre o arquivo das tecnlologias no modo leitura binaria
+    // Abre o arquivo das tecnlologias no modo leitura binaria
     FILE *f_tecnologia = fopen(nomeArquivo, "rb");
 
-    //se o arquivo nao existe, retorna erro
+    // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
         printf("Falha no processamento do arquivo.\n");
         return;
     }   
 
-    //structs
-    Cabecalho tecnologia_cabecalho; //struct de cabecalho
+    // Struct de cabecalho
+    Cabecalho tecnologia_cabecalho;
 
-    //le o cabecalho do arquivo de registro e verifica se eh inconsistente
+    // Le o cabecalho do arquivo de registro e verifica se eh inconsistente
     fread(&tecnologia_cabecalho.status, sizeof(char), 1, f_tecnologia);
     if(tecnologia_cabecalho.status != '1'){
         printf("Falha no processamento do arquivo.\n");
@@ -176,15 +183,101 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
         return;
     }
 
+    // Struct utilizada na leituras de Registros
     Dado *d = (Dado *)malloc(sizeof(Dado));
 
-    //le os campos restantes do cabecalho de tecnologia
+    // Le os campos restantes do cabecalho de tecnologia
     fread(&tecnologia_cabecalho.proxRRN , sizeof(int), 1 , f_tecnologia);
     fread(&tecnologia_cabecalho.nroTecnologias, sizeof(int), 1 , f_tecnologia);
     fread(&tecnologia_cabecalho.nroParesTecnologias, sizeof(int), 1 , f_tecnologia);
 
-    //le cada registro de tecnologia e insere na arvore B
+    // Le cada registro de tecnologia e cria os vertices do grafo
     int indice = 0;
+    while(indice < tecnologia_cabecalho.proxRRN){
+        //byte offset do atual registro
+
+        // Le o atual dado 
+        fread(&d->removido, sizeof(char), 1, f_tecnologia);
+        // Se o registro atual for removido, nao havera insercao
+        if(d->removido == '1'){
+            fseek(f_tecnologia, 75, SEEK_CUR);
+            indice++;
+            continue;
+        }
+
+        //le o dado atual do registro
+        fread(&d->grupo, sizeof(int), 1, f_tecnologia);
+        fread(&d->popularidade, sizeof(int), 1, f_tecnologia);
+        fread(&d->peso, sizeof(int), 1, f_tecnologia);
+
+        fread(&d->tecnologiaOrigem.tamanho, sizeof(int), 1, f_tecnologia); // Tamanho da str1
+        d->tecnologiaOrigem.nome = (char*)malloc(d->tecnologiaOrigem.tamanho + 1);//adiciona +1 para o termino nulo
+        fread(d->tecnologiaOrigem.nome, d->tecnologiaOrigem.tamanho, sizeof(char), f_tecnologia);
+        d->tecnologiaOrigem.nome[d->tecnologiaOrigem.tamanho] = '\0'; // termina nulo
+     
+
+        fread(&d->tecnologiaDestino.tamanho, sizeof(int), 1, f_tecnologia); // Tamanho da str1
+        d->tecnologiaDestino.nome = (char*)malloc(d->tecnologiaDestino.tamanho + 1);//adiciona +1 para o termino nulo
+        fread(d->tecnologiaDestino.nome, d->tecnologiaDestino.tamanho, sizeof(char), f_tecnologia);
+        d->tecnologiaDestino.nome[d->tecnologiaDestino.tamanho] = '\0'; // termina nulo
+
+        fseek(f_tecnologia, 76 - (21+d->tecnologiaOrigem.tamanho+d->tecnologiaDestino.tamanho), SEEK_CUR);
+        
+        // Função anonima para adicionar uma tecnologia somente se ela não existir
+        auto addTechnology = [&](const Technology& tech) {
+            // Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
+            int idx = graph.findVertex(tech.name);
+            if (idx == -1) {
+                // Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
+                graph.addVertex(tech);
+            }
+        };
+        auto addTechnologyT = [&](const Technology& tech) {
+            int idx = graphT.findVertex(tech.name);
+            if (idx == -1) {
+                graphT.addVertex(tech);
+            }
+        };
+
+        // Adiciona se a tecnologia de origem tanto no grafo quanto no grafo transposto
+        addTechnology(Technology(d->tecnologiaOrigem.nome, d->grupo));
+        addTechnologyT(Technology(d->tecnologiaOrigem.nome, d->grupo));
+
+
+        // Libera memoria e incrementa o indice
+        free(d->tecnologiaDestino.nome);
+        free(d->tecnologiaOrigem.nome);
+        indice++;
+    }
+    
+    // Fecha o arquivo para reabrir de novo e realizar um leitura dos registros novamente 
+    // (por algum motivo usar o fseek para retornar ao comeco do arquivo nao funcionava)
+    fclose(f_tecnologia);
+    f_tecnologia = fopen(nomeArquivo, "rb");
+
+    // Se o arquivo nao existe, retorna erro
+    if (f_tecnologia == NULL) {
+        printf("Falha no processamento do arquivo.\n");
+        return;
+    }   
+
+
+
+    // Se o cabecalho do arquivo de registro e verifica se eh inconsistente
+    fread(&tecnologia_cabecalho.status, sizeof(char), 1, f_tecnologia);
+    if(tecnologia_cabecalho.status != '1'){
+        printf("Falha no processamento do arquivo.\n");
+        fclose(f_tecnologia);
+        return;
+    }
+
+    // Le os campos restantes do cabecalho de tecnologia
+    fread(&tecnologia_cabecalho.proxRRN , sizeof(int), 1 , f_tecnologia);
+    fread(&tecnologia_cabecalho.nroTecnologias, sizeof(int), 1 , f_tecnologia);
+    fread(&tecnologia_cabecalho.nroParesTecnologias, sizeof(int), 1 , f_tecnologia);
+
+    // Le cada registro de tecnologia e cria as arestas do grafo
+    indice = 0;
     while(indice < tecnologia_cabecalho.proxRRN){
         //byte offset do atual registro
 
@@ -215,31 +308,39 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
 
         fseek(f_tecnologia, 76 - (21+d->tecnologiaOrigem.tamanho+d->tecnologiaDestino.tamanho), SEEK_CUR);
         
-        // Função para adicionar uma tecnologia somente se ela não existir
+        // Função anonima para adicionar uma tecnologia somente se ela não existir
         auto addTechnology = [&](const Technology& tech) {
+            //Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
             int idx = graph.findVertex(tech.name);
             if (idx == -1) {
+                //Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
                 graph.addVertex(tech);
             }
         };
+        auto addTechnologyT = [&](const Technology& tech) {
+            int idx = graphT.findVertex(tech.name);
+            if (idx == -1) {
+                graphT.addVertex(tech);
+            }
+        };
 
+        // Adiciona Tecnologias de Destino caso elas nao tenham sido criadas como vertices de origem anteriormente
+        addTechnology(Technology(d->tecnologiaDestino.nome, d->grupo));;
+        addTechnologyT(Technology(d->tecnologiaDestino.nome, d->grupo));
 
-        addTechnology(Technology(d->tecnologiaDestino.nome, d->grupo));
-        addTechnology(Technology(d->tecnologiaOrigem.nome, d->grupo));
-
-        if(d->tecnologiaDestino.nome == NULL || d->tecnologiaOrigem.nome == NULL){
-            continue;
+        // Adiciona a aresta somente se possuir um campo peso valido
+        if(d->peso != -1){
+            // Adiciona a aresta no Grafo
+            graph.addEdge(d->tecnologiaOrigem.nome, d->tecnologiaDestino.nome, d->peso);
+            // Adiciona a aresta no Grafo Transposto, note que a ordem das tecnologias foi invertida
+            graphT.addEdge(d->tecnologiaDestino.nome, d->tecnologiaOrigem.nome, d->peso);
         }
 
-        graph.addEdge(d->tecnologiaOrigem.nome, d->tecnologiaDestino.nome, d->peso);
-
-
-        //incrementa o indice
+        // Incrementa o indice e libera memoria
         free(d->tecnologiaDestino.nome);
         free(d->tecnologiaOrigem.nome);
         indice++;
     }
-    
 
         //fecha os arquivos
         free(d);
@@ -252,29 +353,43 @@ void LeRegistro(char *nomeArquivo, Graph &graph){
 
 int main() {
     Graph graph(0); // Inicialização do grafo com 0 vértices
+    Graph graphT(0); // Inicialização do grafo transposto com 0 vértices
 
-    int chave;
-    char NomeArquivo[100];
+    int chave; 
+    char NomeArquivo[100]; 
     char TecDestino[100];
 
-    scanf("%d", &chave);
-    scanf("%s", NomeArquivo);
-    LeRegistro(NomeArquivo, graph);
+    scanf("%d", &chave); // Seleciona a Funcionalidade
+    scanf("%s", NomeArquivo); // Arquivo Binario de Entrada
+
+    //Funcao que Le o Arquivo Binario e cria o grafo a partir dele
+    LeRegistro(NomeArquivo, graph, graphT);
 
     switch (chave)
     {
     case 8:
 
+        //Imprime o Grafo
         graph.printGraph(); 
 
         break;
-    
+    case 9:
+        
+        //Imprime o Grafo transposto
+        graphT.printGraph();
+
+        break;
+
     case 10:
-        int i;
+
+        int i;  
         int j = 0;
+        //Le o numero de buscas que serao realizadas
         scanf("%d", &i);
         while (j < i){
+            //Le a Tecnologia Buscada
             scan_quote_string(TecDestino);
+            //Funcao que encontra
             graph.findClickOriginators(TecDestino);
             j++;
         }
@@ -287,30 +402,7 @@ int main() {
             graph.addVertex(tech);
         }
     };
-
-    /*// Adicionando algumas tecnologias como vértices
-    addTechnology(Technology("AZURE", 2));
-    addTechnology(Technology(".NET", 22));
-    // Adicione outras tecnologias conforme necessário
         
-        int index = graph.findVertex("AZURE");
-        printf("%d", index);
-
-        // Adicionando algumas relações entre tecnologias (arestas)
-        graph.addEdge("AZURE", ".NET", 10);
-        graph.addEdge(".NET", "SQL-SERVER", 20);
-        // Adicione outras relações conforme necessário
-        */
-		
-
-        // Imprimindo a lista de adjacência do grafo
-
-        //scanf("%s", TecDestino);
-        //scan_quote_string(TecDestino);
-        //graph.findClickOriginators(TecDestino);
-
-        
-
         return 0;
         
 }
