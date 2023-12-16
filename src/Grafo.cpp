@@ -5,6 +5,8 @@
 #include <cstdio>
 #include "Cabecalho.h"
 #include "Funcionalidades.h"
+#include <queue>
+#include <limits>
 
 // Estrutura para armazenar informações de uma tecnologia
 struct Technology {
@@ -157,6 +159,49 @@ public:
         }
     }
 
+    // Funcao que procura a menor distancia entre duas tecnologias
+    void dijkstra(const std::string& src, const std::string& dest) {
+        // Verifica se as tecnologias de origem e destino foram encontradas no grafo
+        int srcIdx = findVertex(src);
+        int destIdx = findVertex(dest);
+        if (srcIdx == -1 || destIdx == -1) {
+            std::cout << "Tecnologia de origem ou destino não encontrada!\n";
+            return;
+        }
+
+        // Inicializa um vetor para armazenar as distancias dos vertices da origem
+        std::vector<int> dist(999999, std::numeric_limits<int>::max());
+        dist[srcIdx] = 0; // Define a distancia do vertice origem para si mesmo como 0
+
+        // Utiliza uma fila de prioridade para explorar os vertices de forma ordenada 
+        std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+        pq.push(std::make_pair(0, srcIdx)); // Insere o vertice origem na fila de prioridade
+
+        // Algoritmo de Dijkstra para encontrar o menor caminho
+        while (!pq.empty()) {
+            int u = pq.top().second; // Obtem o vertice com a menor distancia da origem
+            pq.pop();// Remove o vertice da fila de prioridade
+
+            // Itera sobre os vizinhos do vertice atual
+            for (const auto& neighbor : adjList[u]) {
+                int v = findVertex(neighbor.first); // Verifica a existencia do vertice vizinho
+                int weight = neighbor.second; // Obtem o peso da aresta entre u e v
+
+                // Atualiza a pagina se um caminho mais curto foi encontrado
+                if (dist[v] > dist[u] + weight) {
+                    dist[v] = dist[u] + weight;
+                    pq.push(std::make_pair(dist[v], v)); // Insere v na fila de prioridade com a nova distancia
+                }
+            }
+        }
+
+        // Verifica se um caminho foi encontrado e exibe a menor distancia
+        if (dist[destIdx] != std::numeric_limits<int>::max()) {
+            std::cout << src << " " << dest << ": " << dist[destIdx] << std::endl;
+        } else {
+            std::cout << src << " " << dest << ": "<< "CAMINHO INEXISTENTE."<< std::endl;
+        }
+    }
 
 };
 
@@ -357,7 +402,11 @@ int main() {
 
     int chave; 
     char NomeArquivo[100]; 
+    char TecOrigem[100];
     char TecDestino[100];
+
+    int i;  
+    int j = 0;
 
     scanf("%d", &chave); // Seleciona a Funcionalidade
     scanf("%s", NomeArquivo); // Arquivo Binario de Entrada
@@ -382,18 +431,31 @@ int main() {
 
     case 10:
 
-        int i;  
-        int j = 0;
-        //Le o numero de buscas que serao realizadas
+
+        // Le o numero de buscas que serao realizadas
         scanf("%d", &i);
         while (j < i){
-            //Le a Tecnologia Buscada
+            // Le a Tecnologia Buscada
             scan_quote_string(TecDestino);
-            //Funcao que encontra
+            // Funcao que encontra
             graph.findClickOriginators(TecDestino);
             j++;
-        }
+        }   
         break;  
+    case 12:
+        
+        // Le o numero de buscas que serao realizadas
+        scanf("%d", &i);
+        while (j < i){
+            // Le as tecnologias 
+            scan_quote_string(TecOrigem);
+            scan_quote_string(TecDestino);
+
+            // Chama a funcao que calcula a menor distancia entre tecnologias 
+            graph.dijkstra(TecOrigem, TecDestino);
+            j++;
+        }
+        break;
     }
     // Função para adicionar uma tecnologia somente se ela não existir
     auto addTechnology = [&](const Technology& tech) {
