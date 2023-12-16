@@ -1,3 +1,8 @@
+/**
+ * Caroline Severiano Clapis    | NUSP: 13861923
+ * Luciano Gonclves Lopes Filho | NUSP: 13676520 
+ */
+
 #include <iostream>
 #include <list>
 #include <set>
@@ -24,10 +29,8 @@ struct Technology {
 };
 
 
-
-
 // Classe para representar um grafo direcionado com lista de adjacência
-class Graph {
+class Grafo {
     int V; // Número de vértices
 
     // Lista de adjacência (vetor de listas)
@@ -38,10 +41,10 @@ class Graph {
 
 public:
     // Construtor que inicializa o grafo com V vértices
-    Graph(int vertices) : V(vertices), adjList(vertices), vertices() {}
+    Grafo(int vertices) : V(vertices), adjList(vertices), vertices() {}
 
     // Função para buscar um vértice dado o nome da tecnologia
-    int findVertex(const std::string& techName) {   
+    int buscaVertice(const std::string& techName) {   
         //Encontra o vertice com base no nome da tecnologia usando find_if da biblioteca STL do C++
         auto it = std::find_if(vertices.begin(), vertices.end(), [&](const Technology& t) {
             return t.name == techName;
@@ -56,9 +59,9 @@ public:
     }
 
     // Função para adicionar uma tecnologia como vértice
-    void addVertex(const Technology& tech) {
+    void adicionaVertice(const Technology& tech) {
         // Verifica se o vertice nao existe
-        int idx = findVertex(tech.name); 
+        int idx = buscaVertice(tech.name); 
         if (idx == -1) {
             // Caso exista, adiciona mais um vertice na lista de vertices
             vertices.push_back(tech);
@@ -70,9 +73,9 @@ public:
     }
 
     // Função para adicionar uma aresta direcionada com um peso
-    void addEdge(const std::string& src, const std::string& dest, int weight) {
-        int idx_src = findVertex(src); // Encontra o indice do vertice de Origem
-        int idx_dest = findVertex(dest); // Encontra o indice do vertice de Destino
+    void adicionaAresta(const std::string& src, const std::string& dest, int weight) {
+        int idx_src = buscaVertice(src); // Encontra o indice do vertice de Origem
+        int idx_dest = buscaVertice(dest); // Encontra o indice do vertice de Destino
 
         // Verifica se os vertices de origem e destino existem no Grafo
         if (idx_src != -1 && idx_dest != -1) {
@@ -96,8 +99,8 @@ public:
 
 
     // Função para listar as tecnologias de origem para uma tecnologia destino
-    void findClickOriginators(const std::string& destTech) {
-        int idx_dest = findVertex(destTech); // Verifica a tecnologia destino
+    void listaTecnologiasOriginadas(const std::string& destTech) {
+        int idx_dest = buscaVertice(destTech); // Verifica a tecnologia destino
 
         if (idx_dest != -1) {
             // Se a tecnologia destino foi encontrada, imprime tecnologia de destino
@@ -137,7 +140,7 @@ public:
     }
 
     // Função para imprimir a lista de adjacência do grafo
-    void printGraph() {
+    void imprimeGrafo() {
         // Cria uma cópia dos vértices para não alterar a estrutura original
         std::vector<Technology> sortedVertices = vertices;
 
@@ -150,7 +153,7 @@ public:
         // Percorre os vértices ordenados
         for (const auto& vertex : sortedVertices) {
             // Encontra o índice do vértice na lista de adjacência
-            int idx = findVertex(vertex.name);
+            int idx = buscaVertice(vertex.name);
 
             // Imprime as informações do vértice
             for (const auto& edge : adjList[idx]) {
@@ -163,10 +166,10 @@ public:
     }
 
     // Funcao que procura a menor distancia entre duas tecnologias
-    void findMinPath(const std::string& src, const std::string& dest) {
+    void encontraMenorCaminho(const std::string& src, const std::string& dest) {
         // Verifica se as tecnologias de origem e destino foram encontradas no grafo
-        int srcIdx = findVertex(src);
-        int destIdx = findVertex(dest);
+        int srcIdx = buscaVertice(src);
+        int destIdx = buscaVertice(dest);
         if (srcIdx == -1 || destIdx == -1) {
             std::cout << "Registro inexistente." << "\n";
             return;
@@ -190,7 +193,7 @@ public:
             // Itera pelos vizinhos do vertice atual tentando relaxar as suas arestas
             for (const auto& edge : adjList[curTechIdx]) {
                 int weight = edge.second; // Armazena o peso da aresta atual
-                int neighborIdx = findVertex(edge.first); // Armazena a ponta final da aresta atual
+                int neighborIdx = buscaVertice(edge.first); // Armazena a ponta final da aresta atual
 
                 // Checa se a distancia do vizinho sera atualizada
                 if (distance[neighborIdx] != -1 && distance[neighborIdx] <= distance[curTechIdx] + weight) 
@@ -226,7 +229,7 @@ public:
 
         // Itera pelos vizinhos do vertice atual
         for (const auto& edge : adjList[techIdx]) {
-            int neighborIdx = findVertex(edge.first); // Armazena a ponta final da aresta atual
+            int neighborIdx = buscaVertice(edge.first); // Armazena a ponta final da aresta atual
 
             // Checa se o vizinho ainda nao foi visitado
             if (tin[neighborIdx] == -1) {
@@ -253,7 +256,7 @@ public:
     }
 
     // Funcao que imprime a quantidade de componentes fortemente conexas do grafo
-    void findNumSCCs()
+    void encontraNumFC()
     {
         // Inicializa a quantidade de SCCs e o tempo da DFS como 0
         int curTime = 0, numSCCs = 0;
@@ -282,7 +285,7 @@ public:
 };
 
 // Essa funcao cria um grafo e sua transposta a partir de um arquivo de entrada
-void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
+void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
 
     // Abre o arquivo das tecnlologias no modo leitura binaria
     FILE *f_tecnologia = fopen(nomeArquivo, "rb");
@@ -347,16 +350,16 @@ void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
         // Função anonima para adicionar uma tecnologia somente se ela não existir
         auto addTechnology = [&](const Technology& tech) {
             // Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
-            int idx = graph.findVertex(tech.name);
+            int idx = graph.buscaVertice(tech.name);
             if (idx == -1) {
                 // Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
-                graph.addVertex(tech);
+                graph.adicionaVertice(tech);
             }
         };
         auto addTechnologyT = [&](const Technology& tech) {
-            int idx = graphT.findVertex(tech.name);
+            int idx = graphT.buscaVertice(tech.name);
             if (idx == -1) {
-                graphT.addVertex(tech);
+                graphT.adicionaVertice(tech);
             }
         };
 
@@ -432,16 +435,16 @@ void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
         // Função anonima para adicionar uma tecnologia somente se ela não existir
         auto addTechnology = [&](const Technology& tech) {
             //Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
-            int idx = graph.findVertex(tech.name);
+            int idx = graph.buscaVertice(tech.name);
             if (idx == -1) {
                 //Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
-                graph.addVertex(tech);
+                graph.adicionaVertice(tech);
             }
         };
         auto addTechnologyT = [&](const Technology& tech) {
-            int idx = graphT.findVertex(tech.name);
+            int idx = graphT.buscaVertice(tech.name);
             if (idx == -1) {
-                graphT.addVertex(tech);
+                graphT.adicionaVertice(tech);
             }
         };
 
@@ -452,9 +455,9 @@ void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
         // Adiciona a aresta somente se possuir um campo peso valido
         if(d->peso != -1){
             // Adiciona a aresta no Grafo
-            graph.addEdge(d->tecnologiaOrigem.nome, d->tecnologiaDestino.nome, d->peso);
+            graph.adicionaAresta(d->tecnologiaOrigem.nome, d->tecnologiaDestino.nome, d->peso);
             // Adiciona a aresta no Grafo Transposto, note que a ordem das tecnologias foi invertida
-            graphT.addEdge(d->tecnologiaDestino.nome, d->tecnologiaOrigem.nome, d->peso);
+            graphT.adicionaAresta(d->tecnologiaDestino.nome, d->tecnologiaOrigem.nome, d->peso);
         }
 
         // Incrementa o indice e libera memoria
@@ -473,8 +476,8 @@ void LeRegistro(char *nomeArquivo, Graph &graph, Graph &graphT){
 
 
 int main() {
-    Graph graph(0); // Inicialização do grafo com 0 vértices
-    Graph graphT(0); // Inicialização do grafo transposto com 0 vértices
+    Grafo grafo(0); // Inicialização do grafo com 0 vértices
+    Grafo grafoT(0); // Inicialização do grafo transposto com 0 vértices
 
     int chave; 
     char NomeArquivo[100]; 
@@ -488,25 +491,24 @@ int main() {
     scanf("%s", NomeArquivo); // Arquivo Binario de Entrada
 
     //Funcao que Le o Arquivo Binario e cria o grafo a partir dele
-    LeRegistro(NomeArquivo, graph, graphT);
+    criaGrafo(NomeArquivo, grafo, grafoT);
 
     switch (chave)
     {
     case 8:
 
         //Imprime o Grafo
-        graph.printGraph(); 
+        grafo.imprimeGrafo(); 
 
         break;
     case 9:
         
         //Imprime o Grafo transposto
-        graphT.printGraph();
+        grafoT.imprimeGrafo();
 
         break;
 
     case 10:
-
 
         // Le o numero de buscas que serao realizadas
         scanf("%d", &i);
@@ -514,7 +516,7 @@ int main() {
             // Le a Tecnologia Buscada
             scan_quote_string(TecDestino);
             // Funcao que encontra
-            graph.findClickOriginators(TecDestino);
+            grafo.listaTecnologiasOriginadas(TecDestino);
             j++;
         }   
         break;
@@ -522,7 +524,7 @@ int main() {
     case 11:
 
         // Chama a funcao que calcula a quantidade de componentes fortemente conexas
-        graph.findNumSCCs(); 
+        grafo.encontraNumFC(); 
 
         break;
 
@@ -536,18 +538,11 @@ int main() {
             scan_quote_string(TecDestino);
 
             // Chama a funcao que calcula a menor distancia entre tecnologias 
-            graph.findMinPath(TecOrigem, TecDestino);
+            grafo.encontraMenorCaminho(TecOrigem, TecDestino);
             j++;
         }
         break;
     }
-    // Função para adicionar uma tecnologia somente se ela não existir
-    auto addTechnology = [&](const Technology& tech) {
-        int idx = graph.findVertex(tech.name);
-        if (idx == -1) {
-            graph.addVertex(tech);
-        }
-    };
         
         return 0;
         
