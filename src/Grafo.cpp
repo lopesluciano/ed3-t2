@@ -1,10 +1,13 @@
 #include <iostream>
 #include <list>
+#include <set>
 #include <vector>
 #include <algorithm>
 #include <cstdio>
 #include "Cabecalho.h"
 #include "Funcionalidades.h"
+#include <queue>
+#include <limits>
 
 // Estrutura para armazenar informações de uma tecnologia
 struct Technology {
@@ -61,6 +64,8 @@ public:
             vertices.push_back(tech);
             // Adiciona uma lista de vazia correspondente a lista de adjacencias
             adjList.push_back(std::list<std::pair<std::string, int>>());
+            // Aumenta a variavel que guarda a quantidade de vertices
+            V++;
         }
     }
 
@@ -157,7 +162,123 @@ public:
         }
     }
 
+    // Funcao que procura a menor distancia entre duas tecnologias
+    void findMinPath(const std::string& src, const std::string& dest) {
+        // Verifica se as tecnologias de origem e destino foram encontradas no grafo
+        int srcIdx = findVertex(src);
+        int destIdx = findVertex(dest);
+        if (srcIdx == -1 || destIdx == -1) {
+            std::cout << "Registro inexistente." << "\n";
+            return;
+        }
 
+        // Utiliza uma set para iterar pelos vertices em ordem nao-crescente de distancia
+        std::set<std::pair<int, int>> queue;
+
+        // Inicializa um vetor para armazenar as distancias dos vertices da origem
+        // O valor -1 indica que nao foi encontrado nenhum caminho
+        std::vector<int> distance(vertices.size(), -1);
+
+        distance[srcIdx] = 0; // Define a distancia da origem para si mesma como 0
+        queue.insert({0, srcIdx}); // Insere a origem no set
+
+        // Algoritmo de Dijkstra para encontrar caminhos minimos
+        while (!queue.empty()) {
+            int curTechIdx = queue.begin()->second; // Armazena o vertice com menor distancia ainda nao visitado
+            queue.erase(queue.begin()); // Retira esse vertice do set
+
+            // Itera pelos vizinhos do vertice atual tentando relaxar as suas arestas
+            for (const auto& edge : adjList[curTechIdx]) {
+                int weight = edge.second; // Armazena o peso da aresta atual
+                int neighborIdx = findVertex(edge.first); // Armazena a ponta final da aresta atual
+
+                // Checa se a distancia do vizinho sera atualizada
+                if (distance[neighborIdx] != -1 && distance[neighborIdx] <= distance[curTechIdx] + weight) 
+                    continue;
+
+                // Checa se ja havia um caminho da origem ate o vizinho
+                if (distance[neighborIdx] != -1) {
+                    queue.erase({distance[neighborIdx], neighborIdx}); // Remove a versao antiga do vizinho do set
+                }
+
+                distance[neighborIdx] = distance[curTechIdx] + weight; // Atualiza a distancia do vizinho
+                queue.insert({distance[neighborIdx], neighborIdx}); // Insere a nova versao do vizinho no set
+            }
+        }
+
+        std::cout << src << " " << dest << ": ";
+
+        // Checa se existe um caminho da origem ate o vertice destino
+        if (distance[destIdx] == -1) {
+            std::cout << "CAMINHO INEXISTENTE." << "\n";
+        } else {
+            std::cout << distance[destIdx] << "\n";
+        }
+    }
+
+    // Funcao que roda uma DFS para achar as componentes fortemente conexas do grafo
+    void dfsTarjan(const int& techIdx, int& curTime, 
+                std::vector<int>& tin, std::vector<int>& lowlink, 
+                std::vector<bool>& onStack, std::vector<int>& stack, int& numSCCs) {
+        stack.push_back(techIdx); // Coloca o vertice atual na pilha
+        onStack[techIdx] = true; // Atualiza o estado da pilha do vertice atual
+        tin[techIdx] = lowlink[techIdx] = ++curTime; // Inicializa o tempo de entrada e o lowlink do vertice atual
+
+        // Itera pelos vizinhos do vertice atual
+        for (const auto& edge : adjList[techIdx]) {
+            int neighborIdx = findVertex(edge.first); // Armazena a ponta final da aresta atual
+
+            // Checa se o vizinho ainda nao foi visitado
+            if (tin[neighborIdx] == -1) {
+                dfsTarjan(neighborIdx, curTime, tin, lowlink, onStack, stack, numSCCs); // Chama a DFS para esse vizinho
+                lowlink[techIdx] = std::min(lowlink[techIdx], lowlink[neighborIdx]); // Atualiza o lowlink do vertice atual considerando o lowlink do vizinho
+            } else if (onStack[neighborIdx]) { // Checa se o vizinho ainda esta na pilha
+                lowlink[techIdx] = std::min(lowlink[techIdx], tin[neighborIdx]); // Atualiza o lowlink do vertice atual considerando o tempo de entrada do vizinho
+            }
+        }
+
+        // Checa se o vertice atual e a raiz de uma SCC
+        if (lowlink[techIdx] == tin[techIdx]) {
+            numSCCs++; // Aumenta a quantidade de SCCs
+            int aux = -1; // Define uma variavel auxiliar que guardara o topo da pilha
+
+            // Retira os vertices da pilha ate a raiz da SCC
+            while (aux != techIdx) {
+                aux = stack.back(); // Armazena o topo atual da pilha em aux
+                stack.pop_back(); // Remove o topo da pilha
+
+                onStack[aux] = false; // Atualiza o estado da pilha do vertice armazenado em aux
+            }
+        }
+    }
+
+    // Funcao que imprime a quantidade de componentes fortemente conexas do grafo
+    void findNumSCCs()
+    {
+        // Inicializa a quantidade de SCCs e o tempo da DFS como 0
+        int curTime = 0, numSCCs = 0;
+
+        // Inicializa um vector que guarda se um vertice esta na pilha atual ou nao
+        std::vector<bool> onStack(vertices.size(), false);
+
+        // Inicializa os vectors do tempo de entrada na DFS, do lowlink e a pilha dos vertices
+        // O valor -1 indica que o vertice ainda nao foi visitado pela DFS
+        std::vector<int> tin(vertices.size(), -1), lowlink(vertices.size(), -1), stack(0);
+
+        // Itera por todos os vertices do grafo
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            if (tin[i] == -1) { // Verifica se ele ja foi visitado na DFS
+                dfsTarjan(i, curTime, tin, lowlink, onStack, stack, numSCCs);
+            }
+        }
+
+        // Checa se o grafo e fortemente conexo ou nao
+        if (numSCCs == 1) {
+            std::cout << "Sim, o grafo e fortemente conexo e possui 1 componente." << "\n";
+        } else {
+            std::cout << "Não, o grafo não é fortemente conexo e possui " << numSCCs << " componentes." << "\n";
+        }
+    }
 };
 
 // Essa funcao cria um grafo e sua transposta a partir de um arquivo de entrada
@@ -357,7 +478,11 @@ int main() {
 
     int chave; 
     char NomeArquivo[100]; 
+    char TecOrigem[100];
     char TecDestino[100];
+
+    int i;  
+    int j = 0;
 
     scanf("%d", &chave); // Seleciona a Funcionalidade
     scanf("%s", NomeArquivo); // Arquivo Binario de Entrada
@@ -382,18 +507,39 @@ int main() {
 
     case 10:
 
-        int i;  
-        int j = 0;
-        //Le o numero de buscas que serao realizadas
+
+        // Le o numero de buscas que serao realizadas
         scanf("%d", &i);
         while (j < i){
-            //Le a Tecnologia Buscada
+            // Le a Tecnologia Buscada
             scan_quote_string(TecDestino);
-            //Funcao que encontra
+            // Funcao que encontra
             graph.findClickOriginators(TecDestino);
             j++;
+        }   
+        break;
+
+    case 11:
+
+        // Chama a funcao que calcula a quantidade de componentes fortemente conexas
+        graph.findNumSCCs(); 
+
+        break;
+
+    case 12:
+        
+        // Le o numero de buscas que serao realizadas
+        scanf("%d", &i);
+        while (j < i){
+            // Le as tecnologias 
+            scan_quote_string(TecOrigem);
+            scan_quote_string(TecDestino);
+
+            // Chama a funcao que calcula a menor distancia entre tecnologias 
+            graph.findMinPath(TecOrigem, TecDestino);
+            j++;
         }
-        break;  
+        break;
     }
     // Função para adicionar uma tecnologia somente se ela não existir
     auto addTechnology = [&](const Technology& tech) {
@@ -406,5 +552,4 @@ int main() {
         return 0;
         
 }
-
 
