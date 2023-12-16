@@ -1,288 +1,250 @@
 /**
  * Caroline Severiano Clapis    | NUSP: 13861923
- * Luciano Gonclves Lopes Filho | NUSP: 13676520 
+ * Luciano Goncalves Lopes Filho | NUSP: 13676520 
  */
 
-#include <iostream>
-#include <list>
-#include <set>
-#include <vector>
-#include <algorithm>
-#include <cstdio>
-#include "Cabecalho.h"
-#include "Funcionalidades.h"
-#include <queue>
-#include <limits>
+#include "Grafo.h"
 
-// Estrutura para armazenar informações de uma tecnologia
-struct Technology {
-    std::string name;
-    int group;
-    int inDegree;
-    int outDegree;
-    int degree;
-    // Adicione outros campos conforme necessário
-
-    // Construtor para inicializar a estrutura
-    Technology(std::string n, int g)
-        : name(std::move(n)), group(g), inDegree(0), outDegree(0), degree(0) {}
-};
+// Inicializando a estrutura
+Grafo::Grafo(int vertices) : V(vertices), adjList(vertices), vertices() {}
 
 
-// Classe para representar um grafo direcionado com lista de adjacência
-class Grafo {
-    int V; // Número de vértices
+// Função para buscar um vértice dado o nome da tecnologia
+int Grafo::buscaVertice(const std::string& techName) {
+    // Encontra o vertice com base no nome da tecnologia usando find_if da biblioteca STL do C++
+    auto it = std::find_if(vertices.begin(), vertices.end(), [&](const Technology& t) {
+        return t.nome == techName;
+    });
 
-    // Lista de adjacência (vetor de listas)
-    std::vector<std::list<std::pair<std::string, int>>> adjList;
+    // Verifica se o vertice foi encontrado
+    if (it != vertices.end()) {
+        // Retorna a distancia do inicio do vetor (vertices.begin) ate o iterador encontrado
+        return std::distance(vertices.begin(), it);
+    }
+    return -1; // Retorna -1 se a tecnologia não for encontrada
+}
 
-    // Vetor de tecnologias
-    std::vector<Technology> vertices;
+// Função para adicionar uma tecnologia como vértice
+void Grafo::adicionaVertice(const Technology& tech) {
+    // Verifica se o vertice nao existe
+    int idx = buscaVertice(tech.nome); 
+    if (idx == -1) {
+        // Caso exista, adiciona mais um vertice na lista de vertices
+        vertices.push_back(tech);
+        // Adiciona uma lista de vazia correspondente a lista de adjacencias
+        adjList.push_back(std::list<std::pair<std::string, int>>());
+        // Aumenta a variavel que guarda a quantidade de vertices
+        V++;
+    }
+}
 
-public:
-    // Construtor que inicializa o grafo com V vértices
-    Grafo(int vertices) : V(vertices), adjList(vertices), vertices() {}
+// Função para adicionar uma aresta direcionada com um peso
+void Grafo::adicionaAresta(const std::string& src, const std::string& dest, int weight) {
+    int idx_src = buscaVertice(src); // Encontra o indice do vertice de Origem
+    int idx_dest = buscaVertice(dest); // Encontra o indice do vertice de Destino
 
-    // Função para buscar um vértice dado o nome da tecnologia
-    int buscaVertice(const std::string& techName) {   
-        //Encontra o vertice com base no nome da tecnologia usando find_if da biblioteca STL do C++
-        auto it = std::find_if(vertices.begin(), vertices.end(), [&](const Technology& t) {
-            return t.name == techName;
+    // Verifica se os vertices de origem e destino existem no Grafo
+    if (idx_src != -1 && idx_dest != -1) {
+        adjList[idx_src].push_back(std::make_pair(dest, weight));// Adiciona a aresta no na lista de adjacencias do vertice de origem
+
+        // Atualizar os graus dos vertices da aresta
+        vertices[idx_src].grauSaida++;
+        vertices[idx_dest].grauEntrada++;
+        vertices[idx_src].grauTotal++;
+        vertices[idx_dest].grauTotal++;
+
+        // Ordenar a lista de adjacência após adicionar um novo elemento
+        adjList[idx_src].sort([](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {
+            return a.first < b.first; // Ordenar com base no nome da tecnologia destino
         });
-
-        //Verifica se o vertice foi encontrado
-        if (it != vertices.end()) {
-            // Retorna a distancia do inicio do vetor (vertices.begin) ate o iterador encontrado
-            return std::distance(vertices.begin(), it);
-        }
-        return -1; // Retorna -1 se a tecnologia não for encontrada
+    } else {
+        // Caso a tecnologia nao esteja no Grafo
+        std::cout << "Tecnologia não encontrada!\n";
     }
+}
 
-    // Função para adicionar uma tecnologia como vértice
-    void adicionaVertice(const Technology& tech) {
-        // Verifica se o vertice nao existe
-        int idx = buscaVertice(tech.name); 
-        if (idx == -1) {
-            // Caso exista, adiciona mais um vertice na lista de vertices
-            vertices.push_back(tech);
-            // Adiciona uma lista de vazia correspondente a lista de adjacencias
-            adjList.push_back(std::list<std::pair<std::string, int>>());
-            // Aumenta a variavel que guarda a quantidade de vertices
-            V++;
-        }
-    }
+// Função para listar as tecnologias de origem para uma tecnologia destino
+void Grafo::listaTecnologiasOriginadas(const std::string& destTech) {
+    int idx_dest = buscaVertice(destTech); // Verifica a tecnologia destino
 
-    // Função para adicionar uma aresta direcionada com um peso
-    void adicionaAresta(const std::string& src, const std::string& dest, int weight) {
-        int idx_src = buscaVertice(src); // Encontra o indice do vertice de Origem
-        int idx_dest = buscaVertice(dest); // Encontra o indice do vertice de Destino
+    if (idx_dest != -1) {
+        // Se a tecnologia destino foi encontrada, imprime tecnologia de destino
+        std::cout << destTech << ": ";
+        bool found = false;
+        std::vector<std::string> originators; // Armazena as tecnologias de origem
 
-        // Verifica se os vertices de origem e destino existem no Grafo
-        if (idx_src != -1 && idx_dest != -1) {
-            adjList[idx_src].push_back(std::make_pair(dest, weight)); // Adiciona a aresta no na lista de adjacencias do vertice de origem
-
-            // Atualizar os graus dos vertices da aresta
-            vertices[idx_src].outDegree++;
-            vertices[idx_dest].inDegree++;
-            vertices[idx_src].degree++;
-            vertices[idx_dest].degree++;
-
-            // Ordenar a lista de adjacência após adicionar um novo elemento
-            adjList[idx_src].sort([](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {
-                return a.first < b.first;  // Ordenar com base no nome da tecnologia destino
-            });
-        } else {
-            // Caso a tecnologia nao esteja no Grafo
-            std::cout << "Tecnologia não encontrada!\n";
-        }
-    }
-
-
-    // Função para listar as tecnologias de origem para uma tecnologia destino
-    void listaTecnologiasOriginadas(const std::string& destTech) {
-        int idx_dest = buscaVertice(destTech); // Verifica a tecnologia destino
-
-        if (idx_dest != -1) {
-            // Se a tecnologia destino foi encontrada, imprime tecnologia de destino
-            std::cout << destTech << ": ";
-            bool found = false;
-            std::vector<std::string> originators; // Armazena as tecnologias de origem
-
-            // Coleta as tecnologias de origem para a tecnologia destino
-            for (size_t i = 0; i < vertices.size(); ++i) {
-                for (const auto& edge : adjList[i]) {
-                    if (edge.first == destTech) {
-                        originators.push_back(vertices[i].name); // Armazena a tecnologia de origem
-                        break;
-                    }
+        // Coleta as tecnologias de origem para a tecnologia destino
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            for (const auto& edge : adjList[i]) {
+                if (edge.first == destTech) {
+                    originators.push_back(vertices[i].nome); // Armazena a tecnologia de origem
+                    break;
                 }
             }
-
-            // Ordena as tecnologias de origem em ordem alfabética
-            std::sort(originators.begin(), originators.end());
-
-            // Imprime as tecnologias de origem ordenadas
-            for (size_t i = 0; i < originators.size(); ++i) {
-                if (i > 0) {
-                    std::cout << ", ";
-                }
-                std::cout << originators[i]; //Imprime o vetor de tecnologias de origem
-                found = true;
-            }
-
-            if (!found) {
-                std::cout << "Registro inexistente.";// Caso a tecnologia nao seja encontrada
-            }
-        } else {
-            std::cout << "Registro inexistente.";// Caso a tecnologia nao seja encontrada
         }
-        std::cout << "\n\n";
+
+        // Ordena as tecnologias de origem em ordem alfabetica
+        std::sort(originators.begin(), originators.end());
+
+        // Imprime as tecnologias de origem ordenadas
+        for (size_t i = 0; i < originators.size(); ++i) {
+            if (i > 0) {
+                std::cout << ", ";
+            }
+            std::cout << originators[i]; //Imprime o vetor de tecnologias de origem
+            found = true;
+        }
+
+        if (!found) {
+            std::cout << "Registro inexistente."; // Caso a tecnologia nao seja encontrada
+        }
+    } else {
+        std::cout << "Registro inexistente."; // Caso a tecnologia nao seja encontrada
     }
+    std::cout << "\n\n";
+}
 
-    // Função para imprimir a lista de adjacência do grafo
-    void imprimeGrafo() {
-        // Cria uma cópia dos vértices para não alterar a estrutura original
-        std::vector<Technology> sortedVertices = vertices;
 
-        // Ordena os vértices pelo nome da tecnologia
-        std::sort(sortedVertices.begin(), sortedVertices.end(),
-                [](const Technology& a, const Technology& b) {
-                    return a.name < b.name;
-                });
+// Função para imprimir a lista de adjacência do grafo
+void Grafo::imprimeGrafo() {
+    // Cria uma cópia dos vértices para não alterar a estrutura original
+    std::vector<Technology> sortedVertices = vertices;
 
-        // Percorre os vértices ordenados
-        for (const auto& vertex : sortedVertices) {
-            // Encontra o índice do vértice na lista de adjacência
-            int idx = buscaVertice(vertex.name);
+    // Ordena os vértices pelo nome da tecnologia
+    std::sort(sortedVertices.begin(), sortedVertices.end(),
+              [](const Technology& a, const Technology& b) {
+                  return a.nome < b.nome;
+              });
 
-            // Imprime as informações do vértice
-            for (const auto& edge : adjList[idx]) {
-                std::cout << vertex.name << " " << vertex.group << " "
-                        << vertex.inDegree << " " << vertex.outDegree << " "
-                        << vertex.degree << " "
-                        << edge.first << " " << edge.second << "\n";
-            }
-        }
-    }
+    // Percorre os vértices ordenados
+    for (const auto& vertex : sortedVertices) {
+        // Encontra o índice do vértice na lista de adjacência
+        int idx = buscaVertice(vertex.nome);
 
-    // Funcao que procura a menor distancia entre duas tecnologias
-    void encontraMenorCaminho(const std::string& src, const std::string& dest) {
-        // Verifica se as tecnologias de origem e destino foram encontradas no grafo
-        int srcIdx = buscaVertice(src);
-        int destIdx = buscaVertice(dest);
-        if (srcIdx == -1 || destIdx == -1) {
-            std::cout << "Registro inexistente." << "\n";
-            return;
-        }
-
-        // Utiliza uma set para iterar pelos vertices em ordem nao-crescente de distancia
-        std::set<std::pair<int, int>> queue;
-
-        // Inicializa um vetor para armazenar as distancias dos vertices da origem
-        // O valor -1 indica que nao foi encontrado nenhum caminho
-        std::vector<int> distance(vertices.size(), -1);
-
-        distance[srcIdx] = 0; // Define a distancia da origem para si mesma como 0
-        queue.insert({0, srcIdx}); // Insere a origem no set
-
-        // Algoritmo de Dijkstra para encontrar caminhos minimos
-        while (!queue.empty()) {
-            int curTechIdx = queue.begin()->second; // Armazena o vertice com menor distancia ainda nao visitado
-            queue.erase(queue.begin()); // Retira esse vertice do set
-
-            // Itera pelos vizinhos do vertice atual tentando relaxar as suas arestas
-            for (const auto& edge : adjList[curTechIdx]) {
-                int weight = edge.second; // Armazena o peso da aresta atual
-                int neighborIdx = buscaVertice(edge.first); // Armazena a ponta final da aresta atual
-
-                // Checa se a distancia do vizinho sera atualizada
-                if (distance[neighborIdx] != -1 && distance[neighborIdx] <= distance[curTechIdx] + weight) 
-                    continue;
-
-                // Checa se ja havia um caminho da origem ate o vizinho
-                if (distance[neighborIdx] != -1) {
-                    queue.erase({distance[neighborIdx], neighborIdx}); // Remove a versao antiga do vizinho do set
-                }
-
-                distance[neighborIdx] = distance[curTechIdx] + weight; // Atualiza a distancia do vizinho
-                queue.insert({distance[neighborIdx], neighborIdx}); // Insere a nova versao do vizinho no set
-            }
-        }
-
-        std::cout << src << " " << dest << ": ";
-
-        // Checa se existe um caminho da origem ate o vertice destino
-        if (distance[destIdx] == -1) {
-            std::cout << "CAMINHO INEXISTENTE." << "\n";
-        } else {
-            std::cout << distance[destIdx] << "\n";
+        // Imprime as informações do vértice
+        for (const auto& edge : adjList[idx]) {
+            std::cout << vertex.nome << " " << vertex.grupo << " "
+                      << vertex.grauEntrada << " " << vertex.grauSaida << " "
+                      << vertex.grauTotal << " "
+                      << edge.first << " " << edge.second << "\n";
         }
     }
+}
 
-    // Funcao que roda uma DFS para achar as componentes fortemente conexas do grafo
-    void dfsTarjan(const int& techIdx, int& curTime, 
-                std::vector<int>& tin, std::vector<int>& lowlink, 
-                std::vector<bool>& onStack, std::vector<int>& stack, int& numSCCs) {
-        stack.push_back(techIdx); // Coloca o vertice atual na pilha
-        onStack[techIdx] = true; // Atualiza o estado da pilha do vertice atual
-        tin[techIdx] = lowlink[techIdx] = ++curTime; // Inicializa o tempo de entrada e o lowlink do vertice atual
+// Funcao que procura a menor distancia entre duas tecnologias
+void Grafo::encontraMenorCaminho(const std::string& src, const std::string& dest) {
+    // Verifica se as tecnologias de origem e destino foram encontradas no grafo
+    int srcIdx = buscaVertice(src);
+    int destIdx = buscaVertice(dest);
+    if (srcIdx == -1 || destIdx == -1) {
+        std::cout << "Registro inexistente." << "\n";
+        return;
+    }
 
-        // Itera pelos vizinhos do vertice atual
-        for (const auto& edge : adjList[techIdx]) {
+    // Utiliza uma set para iterar pelos vertices em ordem nao-crescente de distancia
+    std::set<std::pair<int, int>> queue;
+
+    // Inicializa um vetor para armazenar as distancias dos vertices da origem
+    // O valor -1 indica que nao foi encontrado nenhum caminho
+    std::vector<int> distance(vertices.size(), -1);
+
+    distance[srcIdx] = 0;// Define a distancia da origem para si mesma como 0
+    queue.insert({0, srcIdx});// Insere a origem no set
+
+    // Algoritmo de Dijkstra para encontrar caminhos minimos
+    while (!queue.empty()) {
+        int curTechIdx = queue.begin()->second; // Armazena o vertice com menor distancia ainda nao visitado
+        queue.erase(queue.begin()); // Retira esse vertice do set
+
+        // Itera pelos vizinhos do vertice atual tentando relaxar as suas arestas
+        for (const auto& edge : adjList[curTechIdx]) {
+            int weight = edge.second; // Armazena o peso da aresta atual
             int neighborIdx = buscaVertice(edge.first); // Armazena a ponta final da aresta atual
 
-            // Checa se o vizinho ainda nao foi visitado
-            if (tin[neighborIdx] == -1) {
-                dfsTarjan(neighborIdx, curTime, tin, lowlink, onStack, stack, numSCCs); // Chama a DFS para esse vizinho
-                lowlink[techIdx] = std::min(lowlink[techIdx], lowlink[neighborIdx]); // Atualiza o lowlink do vertice atual considerando o lowlink do vizinho
-            } else if (onStack[neighborIdx]) { // Checa se o vizinho ainda esta na pilha
-                lowlink[techIdx] = std::min(lowlink[techIdx], tin[neighborIdx]); // Atualiza o lowlink do vertice atual considerando o tempo de entrada do vizinho
+            // Checa se a distancia do vizinho sera atualizada
+            if (distance[neighborIdx] != -1 && distance[neighborIdx] <= distance[curTechIdx] + weight) 
+                continue;
+
+            // Checa se ja havia um caminho da origem ate o vizinho
+            if (distance[neighborIdx] != -1) {
+                queue.erase({distance[neighborIdx], neighborIdx});// Remove a versao antiga do vizinho do set
             }
-        }
 
-        // Checa se o vertice atual e a raiz de uma SCC
-        if (lowlink[techIdx] == tin[techIdx]) {
-            numSCCs++; // Aumenta a quantidade de SCCs
-            int aux = -1; // Define uma variavel auxiliar que guardara o topo da pilha
-
-            // Retira os vertices da pilha ate a raiz da SCC
-            while (aux != techIdx) {
-                aux = stack.back(); // Armazena o topo atual da pilha em aux
-                stack.pop_back(); // Remove o topo da pilha
-
-                onStack[aux] = false; // Atualiza o estado da pilha do vertice armazenado em aux
-            }
+            distance[neighborIdx] = distance[curTechIdx] + weight;// Atualiza a distancia do vizinho
+            queue.insert({distance[neighborIdx], neighborIdx});// Insere a nova versao do vizinho no set
         }
     }
 
-    // Funcao que imprime a quantidade de componentes fortemente conexas do grafo
-    void encontraNumFC()
-    {
-        // Inicializa a quantidade de SCCs e o tempo da DFS como 0
-        int curTime = 0, numSCCs = 0;
+    std::cout << src << " " << dest << ": ";
 
-        // Inicializa um vector que guarda se um vertice esta na pilha atual ou nao
-        std::vector<bool> onStack(vertices.size(), false);
+    // Checa se existe um caminho da origem ate o vertice destino
+    if (distance[destIdx] == -1) {
+        std::cout << "CAMINHO INEXISTENTE." << "\n";
+    } else {
+        std::cout << distance[destIdx] << "\n";
+    }
+}
 
-        // Inicializa os vectors do tempo de entrada na DFS, do lowlink e a pilha dos vertices
+// Funcao que roda uma DFS para achar as componentes fortemente conexas do grafo
+void Grafo::dfsTarjan(const int& techIdx, int& curTime, std::vector<int>& tin, std::vector<int>& lowlink, std::vector<bool>& onStack, std::vector<int>& stack, int& numSCCs) {
+    stack.push_back(techIdx); // Coloca o vertice atual na pilha
+    onStack[techIdx] = true; // Atualiza o estado da pilha do vertice atual
+    tin[techIdx] = lowlink[techIdx] = ++curTime; // Inicializa o tempo de entrada e o lowlink do vertice atual
+
+    // Itera pelos vizinhos do vertice atual
+    for (const auto& edge : adjList[techIdx]) {
+        int neighborIdx = buscaVertice(edge.first); // Armazena a ponta final da aresta atual
+
+        // Checa se o vizinho ainda nao foi visitado
+        if (tin[neighborIdx] == -1) {
+            dfsTarjan(neighborIdx, curTime, tin, lowlink, onStack, stack, numSCCs);// Chama a DFS para esse vizinho
+            lowlink[techIdx] = std::min(lowlink[techIdx], lowlink[neighborIdx]);// Atualiza o lowlink do vertice atual considerando o lowlink do vizinho
+        } else if (onStack[neighborIdx]) { 
+            // Checa se o vizinho ainda esta na pilha
+            lowlink[techIdx] = std::min(lowlink[techIdx], tin[neighborIdx]);// Atualiza o lowlink do vertice atual considerando o tempo de entrada do vizinho
+        }
+    }
+
+    // Checa se o vertice atual e a raiz de uma SCC
+    if (lowlink[techIdx] == tin[techIdx]) {
+        numSCCs++; // Aumenta a quantidade de SCCs
+        int aux = -1; // Define uma variavel auxiliar que guardara o topo da pilha
+
+        // Retira os vertices da pilha ate a raiz da SCC
+        while (aux != techIdx) {
+            aux = stack.back(); // Armazena o topo atual da pilha em aux
+            stack.pop_back();  // Remove o topo da pilha
+
+            onStack[aux] = false; // Atualiza o estado da pilha do vertice armazenado em aux
+        }
+    }
+}
+
+// Funcao que imprime a quantidade de componentes fortemente conexas do grafo
+void Grafo::encontraNumFC() {
+    // Inicializa a quantidade de SCCs e o tempo da DFS como 0
+    int curTime = 0, numSCCs = 0;
+
+    // Inicializa um vector que guarda se um vertice esta na pilha atual ou nao
+    std::vector<bool> onStack(vertices.size(), false);
+    // Inicializa os vectors do tempo de entrada na DFS, do lowlink e a pilha dos vertices
         // O valor -1 indica que o vertice ainda nao foi visitado pela DFS
-        std::vector<int> tin(vertices.size(), -1), lowlink(vertices.size(), -1), stack(0);
+    std::vector<int> tin(vertices.size(), -1), lowlink(vertices.size(), -1), stack(0);
 
-        // Itera por todos os vertices do grafo
-        for (size_t i = 0; i < vertices.size(); ++i) {
-            if (tin[i] == -1) { // Verifica se ele ja foi visitado na DFS
-                dfsTarjan(i, curTime, tin, lowlink, onStack, stack, numSCCs);
-            }
-        }
-
-        // Checa se o grafo e fortemente conexo ou nao
-        if (numSCCs == 1) {
-            std::cout << "Sim, o grafo e fortemente conexo e possui 1 componente." << "\n";
-        } else {
-            std::cout << "Não, o grafo não é fortemente conexo e possui " << numSCCs << " componentes." << "\n";
+    // Itera por todos os vertices do grafo
+    for (size_t i = 0; i < vertices.size(); ++i) {
+        if (tin[i] == -1) { // Verifica se ele ja foi visitado na DFS
+            dfsTarjan(i, curTime, tin, lowlink, onStack, stack, numSCCs);
         }
     }
-};
+
+    // Checa se o grafo eh fortemente conexo ou nao
+    if (numSCCs == 1) {
+        std::cout << "Sim, o grafo é fortemente conexo e possui 1 componente." << "\n";
+    } else {
+        std::cout << "Não, o grafo não é fortemente conexo e possui " << numSCCs << " componentes." << "\n";
+    }
+}
 
 // Essa funcao cria um grafo e sua transposta a partir de um arquivo de entrada
 void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
@@ -350,14 +312,14 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
         // Função anonima para adicionar uma tecnologia somente se ela não existir
         auto addTechnology = [&](const Technology& tech) {
             // Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
-            int idx = graph.buscaVertice(tech.name);
+            int idx = graph.buscaVertice(tech.nome);
             if (idx == -1) {
                 // Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
                 graph.adicionaVertice(tech);
             }
         };
         auto addTechnologyT = [&](const Technology& tech) {
-            int idx = graphT.buscaVertice(tech.name);
+            int idx = graphT.buscaVertice(tech.nome);
             if (idx == -1) {
                 graphT.adicionaVertice(tech);
             }
@@ -435,14 +397,14 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
         // Função anonima para adicionar uma tecnologia somente se ela não existir
         auto addTechnology = [&](const Technology& tech) {
             //Verifica se a tecnologia ja nao foi criada no grafo usando uma funcao de busca por vertice
-            int idx = graph.buscaVertice(tech.name);
+            int idx = graph.buscaVertice(tech.nome);
             if (idx == -1) {
                 //Caso nao a tecnologia nao exista (idx == -1), chama a funcao que adiciona vertices ao grafo
                 graph.adicionaVertice(tech);
             }
         };
         auto addTechnologyT = [&](const Technology& tech) {
-            int idx = graphT.buscaVertice(tech.name);
+            int idx = graphT.buscaVertice(tech.nome);
             if (idx == -1) {
                 graphT.adicionaVertice(tech);
             }
@@ -473,78 +435,4 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
         return;
 }
 
-
-
-int main() {
-    Grafo grafo(0); // Inicialização do grafo com 0 vértices
-    Grafo grafoT(0); // Inicialização do grafo transposto com 0 vértices
-
-    int chave; 
-    char NomeArquivo[100]; 
-    char TecOrigem[100];
-    char TecDestino[100];
-
-    int i;  
-    int j = 0;
-
-    scanf("%d", &chave); // Seleciona a Funcionalidade
-    scanf("%s", NomeArquivo); // Arquivo Binario de Entrada
-
-    //Funcao que Le o Arquivo Binario e cria o grafo a partir dele
-    criaGrafo(NomeArquivo, grafo, grafoT);
-
-    switch (chave)
-    {
-    case 8:
-
-        //Imprime o Grafo
-        grafo.imprimeGrafo(); 
-
-        break;
-    case 9:
-        
-        //Imprime o Grafo transposto
-        grafoT.imprimeGrafo();
-
-        break;
-
-    case 10:
-
-        // Le o numero de buscas que serao realizadas
-        scanf("%d", &i);
-        while (j < i){
-            // Le a Tecnologia Buscada
-            scan_quote_string(TecDestino);
-            // Funcao que encontra
-            grafo.listaTecnologiasOriginadas(TecDestino);
-            j++;
-        }   
-        break;
-
-    case 11:
-
-        // Chama a funcao que calcula a quantidade de componentes fortemente conexas
-        grafo.encontraNumFC(); 
-
-        break;
-
-    case 12:
-        
-        // Le o numero de buscas que serao realizadas
-        scanf("%d", &i);
-        while (j < i){
-            // Le as tecnologias 
-            scan_quote_string(TecOrigem);
-            scan_quote_string(TecDestino);
-
-            // Chama a funcao que calcula a menor distancia entre tecnologias 
-            grafo.encontraMenorCaminho(TecOrigem, TecDestino);
-            j++;
-        }
-        break;
-    }
-        
-        return 0;
-        
-}
 

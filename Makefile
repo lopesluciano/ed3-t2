@@ -4,7 +4,7 @@ OBJ = ./obj
 BIN = ./bin
 
 all:
-	g++ $(SRC)/*.cpp -I $(INCLUDE) -o $(BIN)/programaTrab
+	g++ $(SRC)/*.cpp Main.cpp -I $(INCLUDE) -o $(BIN)/programaTrab
 
 run:
 	$(BIN)/programaTrab

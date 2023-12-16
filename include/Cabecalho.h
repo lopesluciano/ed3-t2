@@ -1,3 +1,9 @@
+/**
+ * Caroline Severiano Clapis    | NUSP: 13861923
+ * Luciano Goncalves Lopes Filho | NUSP: 13676520 
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +11,7 @@
 #ifndef DATATYPESDEF_H_
 #define DATATYPESDEF_H_
 
+//Definicao de cabecalho utilizado para a leitura dos arquivos binarios de entrada
 
 #pragma pack(push,1)
 typedef struct cabecalho{
