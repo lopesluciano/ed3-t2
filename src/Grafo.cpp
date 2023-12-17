@@ -1,5 +1,5 @@
 /**
- * Caroline Severiano Clapis    | NUSP: 13861923
+ * Caroline Severiano Clapis     | NUSP: 13861923
  * Luciano Goncalves Lopes Filho | NUSP: 13676520 
  */
 
@@ -255,7 +255,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
         printf("Falha no processamento do arquivo.\n");
-        return;
+        std::exit(0);
     }   
 
     // Struct de cabecalho
@@ -266,7 +266,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     if(tecnologia_cabecalho.status != '1'){
         printf("Falha no processamento do arquivo.\n");
         fclose(f_tecnologia);
-        return;
+        std::exit(0);
     }
 
     // Struct utilizada na leituras de Registros
@@ -344,7 +344,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
         printf("Falha no processamento do arquivo.\n");
-        return;
+        std::exit(0);
     }   
 
 
@@ -354,7 +354,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     if(tecnologia_cabecalho.status != '1'){
         printf("Falha no processamento do arquivo.\n");
         fclose(f_tecnologia);
-        return;
+        std::exit(0);
     }
 
     // Le os campos restantes do cabecalho de tecnologia
