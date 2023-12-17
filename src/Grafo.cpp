@@ -255,7 +255,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
         printf("Falha no processamento do arquivo.\n");
-        std::exit(0);   
+        return;
     }   
 
     // Struct de cabecalho
@@ -266,7 +266,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     if(tecnologia_cabecalho.status != '1'){
         printf("Falha no processamento do arquivo.\n");
         fclose(f_tecnologia);
-        std::exit(0);   
+        return;
     }
 
     // Struct utilizada na leituras de Registros
@@ -327,6 +327,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
 
         // Adiciona se a tecnologia de origem tanto no grafo quanto no grafo transposto
         addTechnology(Technology(d->tecnologiaOrigem.nome, d->grupo));
+        addTechnologyT(Technology(d->tecnologiaOrigem.nome, d->grupo));
 
 
         // Libera memoria e incrementa o indice
@@ -343,7 +344,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
         printf("Falha no processamento do arquivo.\n");
-        std::exit(0);   
+        return;
     }   
 
 
@@ -353,7 +354,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     if(tecnologia_cabecalho.status != '1'){
         printf("Falha no processamento do arquivo.\n");
         fclose(f_tecnologia);
-        std::exit(0);   
+        return;
     }
 
     // Le os campos restantes do cabecalho de tecnologia
@@ -410,8 +411,9 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
         };
 
         // Adiciona Tecnologias de Destino caso elas nao tenham sido criadas como vertices de origem anteriormente
-        addTechnology(Technology(d->tecnologiaDestino.nome, d->grupo));
-    
+        addTechnology(Technology(d->tecnologiaDestino.nome, d->grupo));;
+        addTechnologyT(Technology(d->tecnologiaDestino.nome, d->grupo));
+
         // Adiciona a aresta somente se possuir um campo peso valido
         if(d->peso != -1){
             // Adiciona a aresta no Grafo
