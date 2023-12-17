@@ -59,7 +59,7 @@ void Grafo::adicionaAresta(const std::string& src, const std::string& dest, int 
         });
     } else {
         // Caso a tecnologia nao esteja no Grafo
-        std::cout << "Tecnologia não encontrada!\n";
+        //std::cout << "Tecnologia não encontrada!\n";
     }
 }
 
@@ -254,7 +254,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
 
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
-        printf("Falha no processamento do arquivo.\n");
+        printf("Falha na execução da funcionalidade.\n");
         std::exit(0);
     }   
 
@@ -264,7 +264,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Le o cabecalho do arquivo de registro e verifica se eh inconsistente
     fread(&tecnologia_cabecalho.status, sizeof(char), 1, f_tecnologia);
     if(tecnologia_cabecalho.status != '1'){
-        printf("Falha no processamento do arquivo.\n");
+        printf("Falha na execução da funcionalidade.\n");
         fclose(f_tecnologia);
         std::exit(0);
     }
@@ -343,7 +343,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
 
     // Se o arquivo nao existe, retorna erro
     if (f_tecnologia == NULL) {
-        printf("Falha no processamento do arquivo.\n");
+        printf("Falha na execução da funcionalidade.\n");
         std::exit(0);
     }   
 
@@ -352,7 +352,7 @@ void criaGrafo(char *nomeArquivo, Grafo &graph, Grafo &graphT){
     // Se o cabecalho do arquivo de registro e verifica se eh inconsistente
     fread(&tecnologia_cabecalho.status, sizeof(char), 1, f_tecnologia);
     if(tecnologia_cabecalho.status != '1'){
-        printf("Falha no processamento do arquivo.\n");
+        printf("Falha na execução da funcionalidade.\n");
         fclose(f_tecnologia);
         std::exit(0);
     }
